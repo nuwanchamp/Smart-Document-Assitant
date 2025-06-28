@@ -22,6 +22,13 @@ docker-compose up --build
 
 This installs all Python dependencies using `uv` and launches the API and Redis containers. The API is available at `http://localhost:8000`.
 
+## API Documentation
+
+The API documentation is automatically generated and can be accessed at:
+
+- **Swagger UI**: `http://localhost:8000/docs` - Interactive documentation with the ability to try out the endpoints
+- **ReDoc**: `http://localhost:8000/redoc` - Alternative documentation view
+
 ### Creating a user and obtaining a token
 
 1. Register a new user:

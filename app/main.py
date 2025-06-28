@@ -7,8 +7,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 import jwt
 
-from . import models, schemas, crud
-from .dependencies import get_db, engine
+from app import models, schemas, crud
+from app.dependencies import get_db, engine
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -16,13 +16,27 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY", "secret")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-app = FastAPI()
+app = FastAPI(
+    title="Smart Document Assistant API",
+    description="API for uploading documents and asking questions about their content",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-@app.get("/health")
+@app.get("/health", tags=["System"])
 def health_check():
+    """
+    Health Check Endpoint
+
+    Returns a simple status message to confirm the API is running.
+
+    Returns:
+        dict: A dictionary with a status message
+    """
     return {"status": "ok"}
 
 
@@ -55,8 +69,23 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     return user
 
 
-@app.post("/signup", response_model=schemas.Token)
+@app.post("/signup", response_model=schemas.Token, tags=["Authentication"])
 def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+    """
+    User Registration
+
+    Creates a new user account with the provided email and password.
+
+    Args:
+        user_in (UserCreate): User registration information including email and password
+        db (Session): Database session dependency
+
+    Returns:
+        Token: Access token for the newly created user
+
+    Raises:
+        HTTPException: 400 error if the email is already registered
+    """
     existing = crud.get_user_by_email(db, user_in.email)
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -65,8 +94,25 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 
-@app.post("/token", response_model=schemas.Token)
+@app.post("/token", response_model=schemas.Token, tags=["Authentication"])
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    User Login
+
+    Authenticates a user and returns an access token.
+
+    The username field in the form should contain the user's email address.
+
+    Args:
+        form_data (OAuth2PasswordRequestForm): Form containing username (email) and password
+        db (Session): Database session dependency
+
+    Returns:
+        Token: Access token for the authenticated user
+
+    Raises:
+        HTTPException: 400 error if credentials are incorrect
+    """
     user = crud.get_user_by_email(db, form_data.username)
     if not user or not crud.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
@@ -74,12 +120,34 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     return {"access_token": token, "token_type": "bearer"}
 
 
-@app.post("/upload", response_model=schemas.UploadResponse)
+@app.post("/upload", response_model=schemas.UploadResponse, tags=["Documents"])
 async def upload_file(
-    file: UploadFile = File(...),
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db),
+        file: UploadFile = File(...),
+        current_user=Depends(get_current_user),
+        db: Session = Depends(get_db),
 ):
+    """
+    Upload Document
+
+    Uploads a document file (PDF or TXT) and extracts its text content.
+
+    The file is stored on the server and its text content is extracted for later querying.
+    Only authenticated users can upload documents.
+
+    Args:
+        file (UploadFile): The file to upload (PDF or TXT format)
+        current_user: The authenticated user (from token)
+        db (Session): Database session dependency
+
+    Returns:
+        UploadResponse: Information about the uploaded document
+
+    Raises:
+        HTTPException: 
+            - 400 error if file type is not supported (only PDF and TXT are allowed)
+            - 400 error if file is too large (max 10MB)
+            - 400 error if PDF is encrypted
+    """
     filename = os.path.basename(file.filename)
     if not filename.lower().endswith((".txt", ".pdf")):
         raise HTTPException(status_code=400, detail="Unsupported file type")
@@ -94,7 +162,22 @@ async def upload_file(
         reader = PdfReader(BytesIO(contents))
         if reader.is_encrypted:
             raise HTTPException(status_code=400, detail="Encrypted PDFs not supported")
-        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+
+        # More robust text extraction with error handling
+        text_parts = []
+        for page in reader.pages:
+            try:
+                page_text = page.extract_text()
+                if page_text:
+                    # Remove any problematic characters
+                    page_text = ''.join(char for char in page_text if ord(char) < 0xD800 or ord(char) > 0xDFFF)
+                    text_parts.append(page_text)
+            except Exception as e:
+                # Log the error if needed
+                text_parts.append("")
+                continue
+
+        text = "\n".join(text_parts)
     else:
         text = contents.decode("utf-8", errors="ignore")
 
@@ -118,13 +201,32 @@ async def upload_file(
     db.refresh(doc)
     return doc
 
-
-@app.post("/ask")
+@app.post("/ask", tags=["Questions"])
 async def ask_question(
     request: schemas.AskRequest,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """
+    Ask Question About Document
+
+    Asks a question about a previously uploaded document and returns an answer.
+
+    The question is processed against the document's extracted text content.
+    Only authenticated users can ask questions, and they can only query their own documents.
+    The question and answer are stored in the history for future reference.
+
+    Args:
+        request (AskRequest): Contains the document ID and question text
+        current_user: The authenticated user (from token)
+        db (Session): Database session dependency
+
+    Returns:
+        dict: Contains the answer to the question
+
+    Raises:
+        HTTPException: 404 error if the document is not found or doesn't belong to the user
+    """
     doc = db.query(models.Document).filter_by(id=request.document_id, user_id=current_user.id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -143,8 +245,23 @@ async def ask_question(
     return {"answer": answer_text}
 
 
-@app.get("/history", response_model=list[schemas.QAHistoryOut])
+@app.get("/history", response_model=list[schemas.QAHistoryOut], tags=["History"])
 def get_history(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Get Question-Answer History
+
+    Retrieves the history of questions and answers for the authenticated user.
+
+    Returns all previous questions asked by the user and their corresponding answers,
+    ordered by most recent first.
+
+    Args:
+        current_user: The authenticated user (from token)
+        db (Session): Database session dependency
+
+    Returns:
+        list[QAHistoryOut]: List of question-answer history records
+    """
     records = (
         db.query(models.QAHistory)
         .filter(models.QAHistory.user_id == current_user.id)
