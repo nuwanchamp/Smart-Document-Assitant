@@ -1,2 +1,9 @@
 fastapi
 uvicorn
+sqlalchemy
+pydantic[email]
+python-multipart
+passlib[bcrypt]
+PyJWT
+PyPDF2
+httpx
