@@ -2,6 +2,8 @@ import os
 from datetime import datetime, timedelta
 from uuid import uuid4
 from dotenv import load_dotenv
+import magic
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -167,8 +169,13 @@ async def upload_file(
     """
 
     filename = os.path.basename(file.filename)
-    if not filename.lower().endswith((".txt", ".pdf")):
+    header_bytes = await file.read(2048)
+    mime_type = magic.from_buffer(header_bytes, mime=True)
+
+
+    if mime_type not in ["text/plain", "application/pdf"]:
         raise HTTPException(status_code=400, detail="Unsupported file type")
+    await file.seek(0)
     contents = await file.read()
     if len(contents) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File too large")
