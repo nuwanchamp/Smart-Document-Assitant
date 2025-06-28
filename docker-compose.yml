@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  api:
+    build: ./app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:////code/app.db
+      - REDIS_URL=redis://redis:6379/0
+      - GENAI_API_KEY=${GENAI_API_KEY}
+    volumes:
+      - ./app.db:/code/app.db
+      - ./uploads:/code/uploads
+    depends_on:
+      - redis
+    networks:
+      - sda-network
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - sda-network
+
+networks:
+  sda-network:
+    driver: bridge

@@ -14,7 +14,37 @@ This repository provides a minimal backend that lets users upload documents and 
 
 ## Setup
 
+### Environment Variables
+
+The application requires a Google Generative AI API key to function properly. You need to provide this key as an environment variable:
+
+- `GENAI_API_KEY`: Your Google Generative AI API key
+
+When running with Docker Compose, the environment variable is automatically passed from your host system to the container. Inside the container, the application reads this environment variable to authenticate with the Google Generative AI API.
+
+### Running with Docker Compose
+
 Build and run the containers:
+
+```bash
+# Set your Google Generative AI API key
+export GENAI_API_KEY=your_api_key_here
+
+# Start the services
+docker-compose up --build
+```
+
+Alternatively, you can create a `.env` file in the project root with your API key. A template file `.env.example` is provided for convenience:
+
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit the .env file with your API key
+# Replace 'your_api_key_here' with your actual API key
+```
+
+And then run:
 
 ```bash
 docker-compose up --build

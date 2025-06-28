@@ -401,7 +401,7 @@ class TestAskQuestion:
         mock_db.query.return_value.filter_by.return_value.first.return_value = mock_doc
 
         # Call the function
-        result = await ask_question(request=mock_request, current_user=mock_user, db=mock_db)
+        result = await ask_question(ask_request=mock_request, current_user=mock_user, db=mock_db)
 
         # Verify the result
         assert "answer" in result
@@ -430,7 +430,7 @@ class TestAskQuestion:
 
         # Call the function and expect an exception
         with pytest.raises(HTTPException) as excinfo:
-            await ask_question(request=mock_request, current_user=mock_user, db=mock_db)
+            await ask_question(ask_request=mock_request, current_user=mock_user, db=mock_db)
 
         # Verify the exception
         assert excinfo.value.status_code == 404
