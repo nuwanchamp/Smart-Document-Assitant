@@ -1,6 +1,10 @@
 FROM python:3.10-slim
 WORKDIR /code
 COPY ./requirements.txt .
+RUN apt update && \
+    apt install -y libmagic1 && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir uv \
     && uv pip install --system -r requirements.txt
 COPY . /code/app
