@@ -2,8 +2,8 @@ from typing import Generator, Callable
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
-from fastapi import Request, HTTPException, Depends
-from limits import RateLimitItem, parse_many
+from fastapi import Request, HTTPException
+from limits import parse_many
 from limits.storage import RedisStorage
 from limits.strategies import MovingWindowRateLimiter
 import redis

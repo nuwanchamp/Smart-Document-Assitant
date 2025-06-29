@@ -8,7 +8,7 @@ import magic
 # Load environment variables from .env file
 load_dotenv()
 
-from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, status, Form
+from fastapi import FastAPI, Depends, File, UploadFile, HTTPException, status, APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 import jwt
@@ -42,8 +42,12 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+# Create API v1 router
+v1_router = APIRouter(prefix="/api/v1")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# OAuth2 scheme for token authentication
+# Note: tokenUrl needs to be relative to the router's prefix
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/token")
 
 
 @app.get("/health", tags=["System"], dependencies=[Depends(rate_limit("100/minute"))])
@@ -56,7 +60,20 @@ def health_check():
     Returns:
         dict: A dictionary with a status message
     """
-    return {"status": "ok"}
+    return {"status": "ok", "version": "1.0.0"}
+
+
+@v1_router.get("/health", tags=["System"], dependencies=[Depends(rate_limit("100/minute"))])
+def health_check_v1():
+    """
+    Health Check Endpoint (v1)
+
+    Returns a simple status message to confirm the API is running.
+
+    Returns:
+        dict: A dictionary with a status message and version information
+    """
+    return {"status": "ok", "version": "1.0.0", "api_version": "v1"}
 
 
 # Auth utilities
@@ -88,7 +105,7 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     return user
 
 
-@app.post("/signup", response_model=schemas.Token, tags=["Authentication"], dependencies=[Depends(rate_limit("10/minute"))])
+@v1_router.post("/signup", response_model=schemas.Token, tags=["Authentication"], dependencies=[Depends(rate_limit("10/minute"))])
 def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     """
     User Registration
@@ -113,7 +130,7 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 
-@app.post("/token", response_model=schemas.Token, tags=["Authentication"], dependencies=[Depends(rate_limit("10/minute"))])
+@v1_router.post("/token", response_model=schemas.Token, tags=["Authentication"], dependencies=[Depends(rate_limit("10/minute"))])
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
     User Login
@@ -140,7 +157,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     return {"access_token": token, "token_type": "bearer"}
 
 
-@app.post("/upload", response_model=schemas.UploadResponse, tags=["Documents"], dependencies=[Depends(rate_limit("5/minute"))])
+@v1_router.post("/upload", response_model=schemas.UploadResponse, tags=["Documents"], dependencies=[Depends(rate_limit("5/minute"))])
 async def upload_file(
         file: UploadFile = File(...),
         current_user=Depends(get_current_user),
@@ -174,7 +191,7 @@ async def upload_file(
 
     if mime_type not in ["text/plain", "application/pdf"]:
         raise HTTPException(status_code=400, detail="Unsupported file type")
-    await file.seek(0)
+    await file.seek(0) # Reset the cursor pointer
     contents = await file.read()
     if len(contents) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File too large")
@@ -225,7 +242,7 @@ async def upload_file(
     db.refresh(doc)
     return doc
 
-@app.post("/ask", tags=["Questions"], dependencies=[Depends(rate_limit("10/minute"))])
+@v1_router.post("/ask", tags=["Questions"], dependencies=[Depends(rate_limit("10/minute"))])
 async def ask_question(
     ask_request: schemas.AskRequest,
     current_user=Depends(get_current_user),
@@ -288,7 +305,7 @@ async def ask_question(
     return {"answer": answer_text}
 
 
-@app.get("/history", response_model=list[schemas.QAHistoryOut], tags=["History"], dependencies=[Depends(rate_limit("20/minute"))])
+@v1_router.get("/history", response_model=list[schemas.QAHistoryOut], tags=["History"], dependencies=[Depends(rate_limit("20/minute"))])
 def get_history(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Get Question-Answer History
@@ -312,3 +329,15 @@ def get_history(current_user=Depends(get_current_user), db: Session = Depends(ge
         .all()
     )
     return records
+
+
+# Include the v1 router in the main app
+app.include_router(v1_router)
+
+
+# For backward compatibility, redirect root endpoints to v1
+@app.get("/")
+async def redirect_to_docs():
+    """Redirects to the API documentation"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/docs")
