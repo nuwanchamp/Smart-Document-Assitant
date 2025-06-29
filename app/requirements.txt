@@ -9,3 +9,6 @@ PyPDF2
 httpx
 google-genai
 python-dotenv
+python-magic
+limits
+redis

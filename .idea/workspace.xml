@@ -6,8 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="dc5c644c-8700-4206-bb20-e536937dd35f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/dependencies.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/dependencies.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/schemas.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,6 +26,25 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {}
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/nuwanchamp/Smart-Document-Assitant.git&quot;,
+    &quot;accountId&quot;: &quot;d50eccce-31f9-44ca-9330-5331325e86ba&quot;
+  },
+  &quot;recentNewPullRequestHead&quot;: {
+    &quot;server&quot;: {
+      &quot;useHttp&quot;: false,
+      &quot;host&quot;: &quot;github.com&quot;,
+      &quot;port&quot;: null,
+      &quot;suffix&quot;: null
+    },
+    &quot;owner&quot;: &quot;nuwanchamp&quot;,
+    &quot;repository&quot;: &quot;Smart-Document-Assitant&quot;
+  }
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
 }</component>
@@ -39,7 +60,7 @@
     &quot;Python tests.Python tests for test_main.TestAskQuestion.test_ask_question_document_not_found.executor&quot;: &quot;Run&quot;,
     &quot;Python tests.Python tests for test_main.TestCreateAccessToken.executor&quot;: &quot;Run&quot;,
     &quot;Python tests.Python tests for test_main.TestCreateAccessToken.test_create_access_token_with_custom_expiry.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for test_main.TestCreateAccessToken.test_create_access_token_with_default_expiry.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_main.TestCreateAccessToken.test_create_access_token_with_default_expiry.executor&quot;: &quot;Debug&quot;,
     &quot;Python tests.Python tests for test_main.TestGetCurrentUser.executor&quot;: &quot;Run&quot;,
     &quot;Python tests.Python tests for test_main.TestGetHistory.executor&quot;: &quot;Run&quot;,
     &quot;Python tests.Python tests for test_main.TestHealthCheck.executor&quot;: &quot;Run&quot;,
@@ -53,7 +74,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;fix/mime__type&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;/home/nuone/fleet/Smart-Document-Assitant&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -67,8 +88,8 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/app" />
       <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/app" />
       <recent name="$PROJECT_DIR$/.venv" />
     </key>
   </component>
@@ -189,8 +210,19 @@
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/app/main.py</url>
+          <line>242</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Smart_Document_Assitant$pytest_for_test_api_test_health.coverage" NAME="pytest for test_api.test_health Coverage Results" MODIFIED="1751097076849" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/app/app/tests" />
-    <SUITE FILE_PATH="coverage/Smart_Document_Assitant$.coverage" NAME=" Coverage Results" MODIFIED="1751105715007" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/app/tests" />
+    <SUITE FILE_PATH="coverage/Smart_Document_Assitant$.coverage" NAME=" Coverage Results" MODIFIED="1751135032980" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/app/tests" />
   </component>
 </project>

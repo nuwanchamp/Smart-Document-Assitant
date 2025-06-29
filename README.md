@@ -59,19 +59,29 @@ The API documentation is automatically generated and can be accessed at:
 - **Swagger UI**: `http://localhost:8000/docs` - Interactive documentation with the ability to try out the endpoints
 - **ReDoc**: `http://localhost:8000/redoc` - Alternative documentation view
 
+## API Versioning
+
+The API uses versioning to ensure backward compatibility as it evolves. All endpoints are prefixed with the API version:
+
+- **v1**: `/api/v1/` - The first version of the API
+
+The health check endpoint is available at both the root level (`/health`) and versioned (`/api/v1/health`).
+
+For more detailed information about the API versioning strategy, including guidelines for future versions, see [API_VERSIONING.md](API_VERSIONING.md).
+
 ### Creating a user and obtaining a token
 
 1. Register a new user:
 
 ```bash
-curl -X POST http://localhost:8000/signup -H "Content-Type: application/json" \
+curl -X POST http://localhost:8000/api/v1/signup -H "Content-Type: application/json" \
     -d '{"email": "test@example.com", "password": "pass"}'
 ```
 
 2. Request an access token:
 
 ```bash
-curl -X POST http://localhost:8000/token -F "username=test@example.com" -F "password=pass"
+curl -X POST http://localhost:8000/api/v1/token -F "username=test@example.com" -F "password=pass"
 ```
 
 Use the returned token to authenticate to protected endpoints.
@@ -79,7 +89,7 @@ Use the returned token to authenticate to protected endpoints.
 ### Upload a document
 
 ```bash
-curl -X POST http://localhost:8000/upload \
+curl -X POST http://localhost:8000/api/v1/upload \
      -H "Authorization: Bearer <TOKEN>" \
      -F "file=@mydoc.pdf"
 ```
@@ -87,7 +97,7 @@ curl -X POST http://localhost:8000/upload \
 ### Ask a question
 
 ```bash
-curl -X POST http://localhost:8000/ask \
+curl -X POST http://localhost:8000/api/v1/ask \
      -H "Authorization: Bearer <TOKEN>" \
      -H "Content-Type: application/json" \
      -d '{"document_id": 1, "question": "What is this document about?"}'
@@ -96,7 +106,7 @@ curl -X POST http://localhost:8000/ask \
 ### View history
 
 ```bash
-curl -H "Authorization: Bearer <TOKEN>" http://localhost:8000/history
+curl -H "Authorization: Bearer <TOKEN>" http://localhost:8000/api/v1/history
 ```
 
 To stop the services, press `Ctrl+C` or run:
