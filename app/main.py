@@ -2,6 +2,8 @@ import os
 from datetime import datetime, timedelta
 from uuid import uuid4
 from dotenv import load_dotenv
+import magic
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -12,7 +14,7 @@ from sqlalchemy.orm import Session
 import jwt
 
 from app import models, schemas, crud
-from app.dependencies import get_db, engine
+from app.dependencies import get_db, engine, rate_limit
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 
@@ -44,7 +46,7 @@ app.add_middleware(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-@app.get("/health", tags=["System"])
+@app.get("/health", tags=["System"], dependencies=[Depends(rate_limit("100/minute"))])
 def health_check():
     """
     Health Check Endpoint
@@ -86,7 +88,7 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     return user
 
 
-@app.post("/signup", response_model=schemas.Token, tags=["Authentication"])
+@app.post("/signup", response_model=schemas.Token, tags=["Authentication"], dependencies=[Depends(rate_limit("10/minute"))])
 def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     """
     User Registration
@@ -111,7 +113,7 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     return {"access_token": token, "token_type": "bearer"}
 
 
-@app.post("/token", response_model=schemas.Token, tags=["Authentication"])
+@app.post("/token", response_model=schemas.Token, tags=["Authentication"], dependencies=[Depends(rate_limit("10/minute"))])
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
     User Login
@@ -138,8 +140,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     return {"access_token": token, "token_type": "bearer"}
 
 
-@app.post("/upload", response_model=schemas.UploadResponse, tags=["Documents"])
-
+@app.post("/upload", response_model=schemas.UploadResponse, tags=["Documents"], dependencies=[Depends(rate_limit("5/minute"))])
 async def upload_file(
         file: UploadFile = File(...),
         current_user=Depends(get_current_user),
@@ -167,8 +168,13 @@ async def upload_file(
     """
 
     filename = os.path.basename(file.filename)
-    if not filename.lower().endswith((".txt", ".pdf")):
+    header_bytes = await file.read(2048)
+    mime_type = magic.from_buffer(header_bytes, mime=True)
+
+
+    if mime_type not in ["text/plain", "application/pdf"]:
         raise HTTPException(status_code=400, detail="Unsupported file type")
+    await file.seek(0)
     contents = await file.read()
     if len(contents) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File too large")
@@ -219,7 +225,7 @@ async def upload_file(
     db.refresh(doc)
     return doc
 
-@app.post("/ask", tags=["Questions"])
+@app.post("/ask", tags=["Questions"], dependencies=[Depends(rate_limit("10/minute"))])
 async def ask_question(
     ask_request: schemas.AskRequest,
     current_user=Depends(get_current_user),
@@ -282,7 +288,7 @@ async def ask_question(
     return {"answer": answer_text}
 
 
-@app.get("/history", response_model=list[schemas.QAHistoryOut], tags=["History"])
+@app.get("/history", response_model=list[schemas.QAHistoryOut], tags=["History"], dependencies=[Depends(rate_limit("20/minute"))])
 def get_history(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Get Question-Answer History
