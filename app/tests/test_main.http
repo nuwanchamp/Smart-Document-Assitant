@@ -1,0 +1,58 @@
+GET http://127.0.0.1:8000/health
+
+###
+GET http://127.0.0.1:8000/history
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJudXdhbkBzYW1wbGUuY29tIiwiZXhwIjoxNzUxMjYwODE4fQ._bE8JsMfBFS8h706-u-V1BvEr-s0p5gSWeMIFvkIZw8
+
+###
+POST http://127.0.0.1:8000/token
+Content-Type: application/x-www-form-urlencoded
+
+username = nuwan@sample.com &
+password = pass
+
+###
+POST http://127.0.0.1:8000/signup
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "strongpassword123"
+}
+
+### Rate Limit Test
+< {%
+    request.variables.set("questions", [
+        {"id": 1, "text": "What is the main topic of this text?"},
+        {"id": 1, "text": "What is the main topic of this text?"},
+        {"id": 1, "text": "What is the main topic of this text?"},
+        {"id": 1, "text": "What is the main topic of this text?"},
+        {"id": 1, "text": "What is the main topic of this text?"},
+        {"id": 1, "text": "What is the main topic of this text?"},
+        {"id": 1, "text": "What is the main topic of this text?"},
+        {"id": 1, "text": "What is the main topic of this text?"},
+        {"id": 1, "text": "What is the main topic of this text?"},
+        {"id": 1, "text": "What is the main topic of this text?"},
+        {"id": 1, "text": "What is the main topic of this text?"}
+    ])
+%}
+
+POST http://127.0.0.1:8000/ask
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJudXdhbkBzYW1wbGUuY29tIiwiZXhwIjoxNzUxMjYwODE4fQ._bE8JsMfBFS8h706-u-V1BvEr-s0p5gSWeMIFvkIZw8
+Content-Type: application/json
+
+{
+  "document_id": {{$.questions..id}},
+  "question": "{{$.questions..text}}"
+}
+
+> {%
+    let current = request.variables.get("questions")[request.iteration()]
+    client.test(`Question ${current.id}: ${current.text}`, () => {
+        client.assert(response.status === 200, "Response status is OK")
+    })
+%}
+
+
+
+
